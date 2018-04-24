@@ -1,32 +1,24 @@
 # Smart Test Data Factory
 <br />
-A lightweight library for dynamically generating Sobject records & setting any required fields, based on the field's metadata
+An Apex library for dynamically setting any required fields on an Sobject record, based on the field's metadata
 <br />
 <br />
 <a href="https://githubsfdeploy.herokuapp.com" target="_blank">
      <img alt="Deploy to Salesforce" src="https://raw.githubusercontent.com/afawcett/githubsfdeploy/master/deploy.png">
 </a>
 
-## Public Constructors
-Two constructors are available
-1. A constructor that accepts an instance of Schema.SObjectType. This constructor can be used when no additional fields need to be set to create the the record, such as custom objects with no required lookup fields or master-detail relationships.
+## Overview
+This library simplifies the process of creating of test records in Salesforce. It can be leveraged in Apex unit tests to automatically set field values for any required field. This is useful when you need to insert records but the exact field values are not relevant to your tests.
+
+> **Note**: Lookup & master-detail fields are **not** set by this library - you must set these fields yourself before you insert your record.
+
+## Usage
+1. **Create your Sobject** You can provide an empty record (`new Account()`), or you can set your own values for any field values that are important to your tests (`new Account(Type='Prospect')`).
+2. **Create a new instance of TestDataFactory by passing your record in the constructor** When you're ready, call populateRequiredFields() to set values for any null required fields.
 
 ```
-TestDataFactory accountTestDataFactory = new TestDataFactory(Schema.Account.SobjectType);
-TestDataFactory myCustomObjectTestDataFactory = new TestDataFactory(Schema.MyCustomObject__c.SobjectType);
-```
-
-2. A constructor that accepts an instance of an Sobject record. The record is used to set any desired field values - any other required fields are automatically set by TestDataFactory
-
-```
-Account defaultAccountValues = new Account(Name = 'My Test Account');
-TestDataFactory accountTestDataFactory = new TestDataFactory(defaultAccountValues);
-```
-
-## Public Methods
-Only 1 public method is available - createRecord(). This method should be called to get the resulting Sobject record. The returned Sobject will need to be cast to your specific Sobject type, instead of the generic type 'Sobject'.
-
-```
-Account defaultAccountValues = new Account(Name = 'My Test Account');
-Account account = (Account)new TestDataFactory(defaultAccountValues).createRecord();
+Account testAccount = new Account();
+new TestDataFactory(testAccount).populateRequiredFields();
+System.assertNotEquals(null, testAccount.Name);
+insert testAccount;
 ```

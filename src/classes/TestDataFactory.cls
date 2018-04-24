@@ -14,10 +14,10 @@ public class TestDataFactory {
         this.record      = record;
         this.sobjectType = record.getSobjectType();
 
-        this.requiredFields = getRequiredFields();
+        this.requiredFields = this.getRequiredFields();
     }
 
-    public Sobject createRecord() {
+    public Sobject populateRequiredFields() {
         this.setRequiredFieldsOnRecord();
         return this.record;
     }
@@ -67,32 +67,38 @@ public class TestDataFactory {
         // but the logic below could be updated to support creating parent objects if needed
 
         // Unsupported display types have been commented-out below
-        // if(displayType == Schema.DisplayType.Address) return null;
-        // else if(displayType == Schema.DisplayType.AnyType) return null;
-        // else if(displayType == Schema.DisplayType.Base64) return null;
+        /*
+            Schema.DisplayType.Address, Schema.DisplayType.AnyType, Schema.DisplayType.Base64,
+            Schema.DisplayType.DataCategoryGroupReference, Schema.DisplayType.Id, Schema.DisplayType.Reference
+        */
+
         if(displayType == Schema.DisplayType.Boolean) return false;
         else if(displayType == Schema.DisplayType.Combobox) return 'Test combobox';
-        else if(displayType == Schema.DisplayType.Currency) return 19.23;
-        // else if(displayType == Schema.DisplayType.DataCategoryGroupReference) return null;
+        else if(displayType == Schema.DisplayType.Currency) return 19.85;
         else if(displayType == Schema.DisplayType.Date) return System.today();
         else if(displayType == Schema.DisplayType.DateTime) return System.now();
         else if(displayType == Schema.DisplayType.Double) return 3.14;
-        else if(displayType == Schema.DisplayType.Email) return 'test@fake.com';
-        // else if(displayType == Schema.DisplayType.EncryptedString) return null;
-        else if(displayType == Schema.DisplayType.ID) return null;
+        else if(displayType == Schema.DisplayType.Email) return 'test@example.com';
+        else if(displayType == Schema.DisplayType.EncryptedString) return this.getStringValue(fieldDescribe);
         else if(displayType == Schema.DisplayType.Integer) return 1;
         else if(displayType == Schema.DisplayType.MultiPicklist) return fieldDescribe.getPicklistValues()[0].getValue();
         else if(displayType == Schema.DisplayType.Percent) return 0.42;
         else if(displayType == Schema.DisplayType.Phone) return '+34 999 11 22 33';
         else if(displayType == Schema.DisplayType.Picklist) return fieldDescribe.getPicklistValues()[0].getValue();
-        // else if(displayType == Schema.DisplayType.Reference) return null;
-        else if(displayType == Schema.DisplayType.String) return 'Test string';
-        else if(displayType == Schema.DisplayType.TextArea) return 'Test text area';
+        else if(displayType == Schema.DisplayType.String) return this.getStringValue(fieldDescribe);
+        else if(displayType == Schema.DisplayType.TextArea) return this.getStringValue(fieldDescribe);
         else if(displayType == Schema.DisplayType.Time) return Time.newInstance(13, 30, 6, 20);
-        else if(displayType == Schema.DisplayType.URL) return 'https://salesforce.com';
+        else if(displayType == Schema.DisplayType.Url) return 'https://salesforce.com';
 
         // Any non-supported display types will return null - test classes will need to handle setting the values
         else return null;
+    }
+
+    private String getStringValue(Schema.DescribeFieldResult fieldDescribe) {
+        String strValue   = 'Test string for ' + fieldDescribe.getType();
+        Integer maxLength = fieldDescribe.getLength();
+
+        return strValue.length() <= maxLength ? strValue : strValue.left(maxLength);
     }
 
 }
