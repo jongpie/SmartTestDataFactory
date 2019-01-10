@@ -60,7 +60,6 @@ public class TestDataFactory {
     }
 
     private Object getTestValue(Schema.DescribeFieldResult fieldDescribe) {
-        Schema.DisplayType displayType = fieldDescribe.getType();
         // Since Apex does not support case statements, we use several ugly IF-ELSE statements
         // Some more complex data types, like ID & Reference, require other objects to be created
         // This implementation delegates that responsibility to the test classes since DML is required to get a valid ID,
@@ -71,27 +70,26 @@ public class TestDataFactory {
             Schema.DisplayType.Address, Schema.DisplayType.AnyType, Schema.DisplayType.Base64,
             Schema.DisplayType.DataCategoryGroupReference, Schema.DisplayType.Id, Schema.DisplayType.Reference
         */
-
-        if(displayType == Schema.DisplayType.Boolean) return false;
-        else if(displayType == Schema.DisplayType.Combobox) return 'Test combobox';
-        else if(displayType == Schema.DisplayType.Currency) return 19.85;
-        else if(displayType == Schema.DisplayType.Date) return System.today();
-        else if(displayType == Schema.DisplayType.DateTime) return System.now();
-        else if(displayType == Schema.DisplayType.Double) return 3.14;
-        else if(displayType == Schema.DisplayType.Email) return 'test@example.com';
-        else if(displayType == Schema.DisplayType.EncryptedString) return this.getStringValue(fieldDescribe);
-        else if(displayType == Schema.DisplayType.Integer) return 1;
-        else if(displayType == Schema.DisplayType.MultiPicklist) return fieldDescribe.getPicklistValues()[0].getValue();
-        else if(displayType == Schema.DisplayType.Percent) return 0.42;
-        else if(displayType == Schema.DisplayType.Phone) return '+34 999 11 22 33';
-        else if(displayType == Schema.DisplayType.Picklist) return fieldDescribe.getPicklistValues()[0].getValue();
-        else if(displayType == Schema.DisplayType.String) return this.getStringValue(fieldDescribe);
-        else if(displayType == Schema.DisplayType.TextArea) return this.getStringValue(fieldDescribe);
-        else if(displayType == Schema.DisplayType.Time) return Time.newInstance(13, 30, 6, 20);
-        else if(displayType == Schema.DisplayType.Url) return 'https://salesforce.com';
-
-        // Any non-supported display types will return null - test classes will need to handle setting the values
-        else return null;
+        switch on fieldDescribe.getType() {
+            when Boolean         { return false; }
+            when Combobox        { return 'Test combobox'; }
+            when Currency        { return 19.85; }
+            when Date            { return System.today(); }
+            when DateTime        { return System.now(); }
+            when Double          { return 3.14; }
+            when Email           { return 'test@example.com'; }
+            when EncryptedString { return this.getStringValue(fieldDescribe); }
+            when Integer         { return 1; }
+            when MultiPicklist   { return fieldDescribe.getPicklistValues()[0].getValue(); }
+            when Percent         { return 0.42; }
+            when Phone           { return '+34 999 11 22 33'; }
+            when Picklist        { return fieldDescribe.getPicklistValues()[0].getValue(); }
+            when String          { return this.getStringValue(fieldDescribe); }
+            when TextArea        { return this.getStringValue(fieldDescribe); }
+            when Time            { return Time.newInstance(13, 30, 6, 20); }
+            when Url             { return 'https://salesforce.com'; }
+            when else            { return null; } // Any non-supported display types will return null - test classes will need to handle setting the values
+        }
     }
 
     private String getStringValue(Schema.DescribeFieldResult fieldDescribe) {
