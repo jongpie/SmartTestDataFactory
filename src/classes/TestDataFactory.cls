@@ -1,4 +1,8 @@
-@isTest // Use @isTest annotation so that we don't accidentally use it to create real data
+/******************************************************************************************************
+* This file is part of the Simple Trigger handler project, released under the MIT License.            *
+* See LICENSE file or go to https://github.com/jongpie/SmartTestDataFactory for full license details. *
+******************************************************************************************************/
+@isTest
 public class TestDataFactory {
 
     private final Schema.SobjectType sobjectType;
@@ -72,7 +76,7 @@ public class TestDataFactory {
         */
         switch on fieldDescribe.getType() {
             when Boolean         { return false; }
-            when Combobox        { return 'Test combobox'; }
+            when Combobox        { return this.getStringValue(fieldDescribe); }
             when Currency        { return 19.85; }
             when Date            { return System.today(); }
             when DateTime        { return System.now(); }
