@@ -1,39 +1,63 @@
-/******************************************************************************************************
-* This file is part of the Simple Trigger handler project, released under the MIT License.            *
-* See LICENSE file or go to https://github.com/jongpie/SmartTestDataFactory for full license details. *
-******************************************************************************************************/
-@isTest
-public class TestDataFactory {
+/***********************************************************************************************************
+* This file is part of the Simple Trigger handler project, released under the MIT License.                 *
+* See LICENSE file or go to https://github.com/jongpie/SmartTestSObjectGenerator for full license details. *
+***********************************************************************************************************/
+public virtual class TestSObjectGenerator {
 
-    private final Schema.SobjectType sobjectType;
-    private final List<Schema.SobjectField> requiredFields;
+    private class TestSObjectGeneratorException extends Exception {}
 
-    private Sobject record;
+    private static final Organization ORGANIZATION = [SELECT IsSandbox, OrganizationType FROM Organization LIMIT 1];
 
-    public TestDataFactory(Schema.SobjectType sobjectType) {
-        this(sobjectType.newSobject());
+    protected final SObject record;
+    protected final List<Schema.SObjectField> requiredFields;
+
+    public TestSObjectGenerator(Schema.SObjectType sobjectType) {
+        this(sobjectType.newSObject());
     }
 
-    public TestDataFactory(Sobject record) {
-        this.record      = record;
-        this.sobjectType = record.getSobjectType();
+    public TestSObjectGenerator(SObject record) {
+        this.validateEnvironment();
 
-        this.requiredFields = this.getRequiredFields();
+        this.record         = record;
+        this.requiredFields = this.getRequiredFields(record.getSObjectType());
     }
 
-    public Sobject populateRequiredFields() {
+    public SObject populateRequiredFields() {
+        this.setDefaultFieldsAndValues();
         this.setRequiredFieldsOnRecord();
         return this.record;
     }
 
-    private List<Schema.SobjectField> getRequiredFields() {
-        List<SobjectField> requiredFields = new List<SobjectField>();
-        for(Schema.SobjectField field : this.sobjectType.getDescribe().fields.getMap().values()) {
+    protected virtual Map<SObjectField, Object> getDefaultFieldsAndValues() {
+        return new Map<Schema.SObjectField, Object>();
+    }
+
+    private void validateEnvironment() {
+        // Prevents accidentally generating test data in production
+        if(Test.isRunningTest()) return;
+        if(ORGANIZATION.IsSandbox) return;
+        if(ORGANIZATION.OrganizationType == 'Developer Edition') return;
+
+        throw new TestSObjectGeneratorException('Cannot generate test records in production');
+    }
+
+    private void setDefaultFieldsAndValues() {
+        for(Schema.SObjectField field : this.getDefaultFieldsAndValues().keySet()) {
+            String fieldName  = field.getDescribe().getName();
+            Object fieldValue = this.getDefaultFieldsAndValues().get(field);
+
+            this.record.put(fieldName, fieldValue);
+        }
+    }
+
+    private List<Schema.SObjectField> getRequiredFields(Schema.SObjectType sobjectType) {
+        List<SObjectField> requiredFields = new List<SObjectField>();
+        for(Schema.SObjectField field : sobjectType.getDescribe().fields.getMap().values()) {
             Schema.DescribeFieldResult fieldDescribe = field.getDescribe();
 
             // Guard clauses for fields that aren't required
-            if(fieldDescribe.isNillable() == true) continue;
             if(fieldDescribe.isCreateable() == false) continue;
+            if(fieldDescribe.isNillable() == true) continue;
 
             // If a field is not nillable & it is createable, then it's required
             requiredFields.add(field);
@@ -44,19 +68,16 @@ public class TestDataFactory {
 
     private void setRequiredFieldsOnRecord() {
         Map<String, Object> populatedFields = this.record.getPopulatedFieldsAsMap();
-        for(Schema.SobjectField field : this.requiredFields) {
+        for(Schema.SObjectField field : this.requiredFields) {
             Schema.DescribeFieldResult fieldDescribe = field.getDescribe();
-            // If a field was already populated by using the constructor 'TestDataFactory(Sobject record)', then don't change it
+            // If a field was already populated by using the constructor 'TestSObjectGenerator(SObject record)', then don't change it
             if(populatedFields.containsKey(fieldDescribe.getName())) continue;
 
             Object fieldValue;
-            if(fieldDescribe.getDefaultValue() != null) {
-                // If there is a default value setup for the field, use it
-                fieldValue = fieldDescribe.getDefaultValue();
-            } else {
-                // Otherwise, we'll generate our own test value to use, based on the field's metadata
-                fieldValue = this.getTestValue(fieldDescribe);
-            }
+            // If there is a default value setup for the field, use it
+            if(fieldDescribe.getDefaultValue() != null) fieldValue = fieldDescribe.getDefaultValue();
+            // Otherwise, we'll generate our own test value to use, based on the field's metadata
+            else fieldValue = this.getTestValue(fieldDescribe);
 
             // If we now have a value to use, set it on the record
             if(fieldValue != null) this.record.put(field, fieldValue);
@@ -64,7 +85,6 @@ public class TestDataFactory {
     }
 
     private Object getTestValue(Schema.DescribeFieldResult fieldDescribe) {
-        // Since Apex does not support case statements, we use several ugly IF-ELSE statements
         // Some more complex data types, like ID & Reference, require other objects to be created
         // This implementation delegates that responsibility to the test classes since DML is required to get a valid ID,
         // but the logic below could be updated to support creating parent objects if needed
@@ -86,7 +106,7 @@ public class TestDataFactory {
             when Integer         { return 1; }
             when MultiPicklist   { return fieldDescribe.getPicklistValues()[0].getValue(); }
             when Percent         { return 0.42; }
-            when Phone           { return '+34 999 11 22 33'; }
+            when Phone           { return '+1 (510) 555-1234'; }
             when Picklist        { return fieldDescribe.getPicklistValues()[0].getValue(); }
             when String          { return this.getStringValue(fieldDescribe); }
             when TextArea        { return this.getStringValue(fieldDescribe); }
