@@ -28,7 +28,7 @@ public virtual class TestSObjectGenerator {
         return this.record;
     }
 
-    protected virtual Map<SObjectField, Object> getDefaultFieldsAndValues() {
+    protected virtual Map<Schema.SObjectField, Object> getDefaultFieldsAndValues() {
         return new Map<Schema.SObjectField, Object>();
     }
 
@@ -50,7 +50,7 @@ public virtual class TestSObjectGenerator {
     }
 
     private List<Schema.SObjectField> getRequiredFields(Schema.SObjectType sobjectType) {
-        List<SObjectField> requiredFields = new List<SObjectField>();
+        List<Schema.SObjectField> requiredFields = new List<Schema.SObjectField>();
         for(Schema.SObjectField field : sobjectType.getDescribe().fields.getMap().values()) {
             Schema.DescribeFieldResult fieldDescribe = field.getDescribe();
 
@@ -117,7 +117,7 @@ public virtual class TestSObjectGenerator {
     }
 
     private String getStringValue(Schema.DescribeFieldResult fieldDescribe) {
-        String strValue   = 'Test string for ' + fieldDescribe.getType();
+        String strValue   = 'Test string for ' + fieldDescribe.getName();
         Integer maxLength = fieldDescribe.getLength();
 
         return strValue.length() <= maxLength ? strValue : strValue.left(maxLength);
