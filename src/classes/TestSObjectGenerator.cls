@@ -43,10 +43,9 @@ public virtual class TestSObjectGenerator {
 
     private void setDefaultFieldsAndValues() {
         for(Schema.SObjectField field : this.getDefaultFieldsAndValues().keySet()) {
-            String fieldName  = field.getDescribe().getName();
             Object fieldValue = this.getDefaultFieldsAndValues().get(field);
 
-            this.record.put(fieldName, fieldValue);
+            this.record.put(field, fieldValue);
         }
     }
 
@@ -70,6 +69,7 @@ public virtual class TestSObjectGenerator {
         Map<String, Object> populatedFields = this.record.getPopulatedFieldsAsMap();
         for(Schema.SObjectField field : this.requiredFields) {
             Schema.DescribeFieldResult fieldDescribe = field.getDescribe();
+
             // If a field was already populated by using the constructor 'TestSObjectGenerator(SObject record)', then don't change it
             if(populatedFields.containsKey(fieldDescribe.getName())) continue;
 
