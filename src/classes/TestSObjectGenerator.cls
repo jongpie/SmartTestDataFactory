@@ -89,14 +89,14 @@ public virtual class TestSObjectGenerator {
             // If there is a default value setup for the field, use it
             if(fieldDescribe.getDefaultValue() != null) fieldValue = fieldDescribe.getDefaultValue();
             // Otherwise, we'll generate our own test value to use, based on the field's metadata
-            else fieldValue = this.getTestValue(fieldDescribe);
+            else fieldValue = this.generateTestValue(fieldDescribe);
 
             // If we now have a value to use, set it on the record
             if(fieldValue != null) this.record.put(field, fieldValue);
         }
     }
 
-    private Object getTestValue(Schema.DescribeFieldResult fieldDescribe) {
+    private Object generateTestValue(Schema.DescribeFieldResult fieldDescribe) {
         // Some more complex data types, like ID & Reference, require other objects to be created
         // This implementation delegates that responsibility to the test classes since DML is required to get a valid ID,
         // but the logic below could be updated to support creating parent objects if needed
@@ -108,31 +108,31 @@ public virtual class TestSObjectGenerator {
         */
         switch on fieldDescribe.getType() {
             when Boolean         { return false; }
-            when Combobox        { return this.getStringValue(fieldDescribe); }
+            when Combobox        { return this.generateStringValue(fieldDescribe); }
             when Currency        { return 19.85; }
             when Date            { return System.today(); }
             when DateTime        { return System.now(); }
             when Double          { return 3.14; }
             when Email           { return 'test@example.com'; }
-            when EncryptedString { return this.getStringValue(fieldDescribe); }
+            when EncryptedString { return this.generateStringValue(fieldDescribe); }
             when Integer         { return 1; }
             when MultiPicklist   { return fieldDescribe.getPicklistValues()[0].getValue(); }
             when Percent         { return 0.42; }
             when Phone           { return '+1 (510) 555-1234'; }
             when Picklist        { return fieldDescribe.getPicklistValues()[0].getValue(); }
-            when String          { return this.getStringValue(fieldDescribe); }
-            when TextArea        { return this.getStringValue(fieldDescribe); }
+            when String          { return this.generateStringValue(fieldDescribe); }
+            when TextArea        { return this.generateStringValue(fieldDescribe); }
             when Time            { return Time.newInstance(13, 30, 6, 20); }
             when Url             { return 'https://salesforce.com'; }
             when else            { return null; } // Any non-supported display types will return null - test classes will need to handle setting the values
         }
     }
 
-    private String getStringValue(Schema.DescribeFieldResult fieldDescribe) {
-        String strValue   = 'Test string for ' + fieldDescribe.getName();
+    private String generateStringValue(Schema.DescribeFieldResult fieldDescribe) {
+        String generatedValue = 'Test string for ' + fieldDescribe.getName();
         Integer maxLength     = fieldDescribe.getLength();
 
-        return strValue.length() <= maxLength ? strValue : strValue.left(maxLength);
+        return generatedValue.length() <= maxLength ? generatedValue : generatedValue.left(maxLength);
     }
 
 }
