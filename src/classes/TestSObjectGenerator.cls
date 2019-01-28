@@ -7,6 +7,7 @@ public virtual class TestSObjectGenerator {
     private class TestSObjectGeneratorException extends Exception {}
 
     private static final Organization ORGANIZATION = [SELECT IsSandbox, OrganizationType FROM Organization LIMIT 1];
+    private static final Map<Schema.SObjectType, List<Schema.SObjectField>> REQUIRED_FIELDS_BY_SOBJECT_TYPE = new Map<Schema.SObjectType, List<Schema.SObjectField>>();
 
     protected final SObject record;
     protected final List<Schema.SObjectField> requiredFields;
@@ -50,6 +51,14 @@ public virtual class TestSObjectGenerator {
     }
 
     private List<Schema.SObjectField> getRequiredFields(Schema.SObjectType sobjectType) {
+        // Use cached list if present
+        if(REQUIRED_FIELDS_BY_SOBJECT_TYPE.containsKey(sobjectType)) {
+            System.debug(LoggingLevel.FINEST, 'Using cached list of required fields for SObject Type: ' + sobjectType);
+            return REQUIRED_FIELDS_BY_SOBJECT_TYPE.get(sobjectType);
+        }
+
+        System.debug(LoggingLevel.FINEST, 'Calculating list of required fields for SObject Type: ' + sobjectType);
+
         List<Schema.SObjectField> requiredFields = new List<Schema.SObjectField>();
         for(Schema.SObjectField field : sobjectType.getDescribe().fields.getMap().values()) {
             Schema.DescribeFieldResult fieldDescribe = field.getDescribe();
@@ -61,6 +70,9 @@ public virtual class TestSObjectGenerator {
             // If a field is not nillable & it is createable, then it's required
             requiredFields.add(field);
         }
+
+        // Cache the list for any subsequent calls for this same sobject type
+        REQUIRED_FIELDS_BY_SOBJECT_TYPE.put(sobjectType, requiredFields);
 
         return requiredFields;
     }
@@ -118,7 +130,7 @@ public virtual class TestSObjectGenerator {
 
     private String getStringValue(Schema.DescribeFieldResult fieldDescribe) {
         String strValue   = 'Test string for ' + fieldDescribe.getName();
-        Integer maxLength = fieldDescribe.getLength();
+        Integer maxLength     = fieldDescribe.getLength();
 
         return strValue.length() <= maxLength ? strValue : strValue.left(maxLength);
     }
